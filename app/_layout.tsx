@@ -7,7 +7,9 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { JobsProvider } from '@/contexts/JobsContext';
+import { BookmarksProvider } from '@/contexts/BookmarksContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -28,17 +30,20 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-  const queryClient = new QueryClient();
+
 
   return (
-    <QueryClientProvider client={queryClient}>
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    
+    <JobsProvider>
+      <BookmarksProvider>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
+        <Stack.Screen name="[jobId]" />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-    </QueryClientProvider>
+      </BookmarksProvider>
+      </JobsProvider>
+      
+
   );
 }

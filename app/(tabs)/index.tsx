@@ -1,49 +1,41 @@
-import { Image, StyleSheet, Platform, View, Text, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import { FlatList, ActivityIndicator, Text, Pressable } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 
-const fetchTodos = async () => {
-  const response = await axios.get('https://jsonplaceholder.typicode.com/todos');
-  return response.data;
-};
-export default function HomeScreen() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodos,
-  });
-  if (isLoading) return <ActivityIndicator size="large" />;
-  if (error) return <Text>Error: {error.message}</Text>;
+import { useJobs } from '@/contexts/JobsContext';
+import JobCard from '@/components/ui/job/JobCard';
+import { useBookmarks } from '@/contexts/BookmarksContext';
+
+
+export default function JobsScreen() {
+  const { jobs, loading, error, loadMore, refresh } = useJobs();
+  const { refreshBookmarks} = useBookmarks();
+  const router = useRouter();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();             // Re-fetch jobs
+      refreshBookmarks();    // Re-fetch bookmark status
+    }, [refresh, refreshBookmarks])
+  );
+  
+
+  if (error) return <Text>Error: {error}</Text>;
+  if (!jobs.length && loading) return <ActivityIndicator />;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text>Hi</Text>
-      <View>
-      {data.map((todo: any) => (
-        <Text key={todo.id}>{todo.title}</Text>
-      ))}
-    </View>
-    </SafeAreaView>
+    <FlatList
+      data={jobs}
+      keyExtractor={j => j.id.toString()}
+      renderItem={({ item }) => (
+        <Pressable onPress={() => router.push(`/${item.id}`)}>
+        <JobCard job={item}  />
+        </Pressable>
+      )}
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={loading ? <ActivityIndicator /> : null}
+      contentContainerStyle={{ paddingBottom: 200 }} 
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-  container:{
-    backgroundColor:"white"
-  }
-});
